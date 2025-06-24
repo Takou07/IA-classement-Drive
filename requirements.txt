@@ -1,0 +1,9 @@
+gradio
+pydrive
+sentence-transformers
+PyMuPDF
+gradio
+fitz  
+re
+csv
+os
