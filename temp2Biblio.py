@@ -65,7 +65,6 @@ def lire_pdf(path):
         return ""
 
 def trouver_ou_creer_dossier(drive, nom):
-    # On cherche par le nom complet (ex: "Développement personnel")
     file_list = drive.ListFile({
         'q': f"title='{nom}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
     }).GetList()
@@ -99,8 +98,8 @@ def classer_et_feedback(file, feedback):
     for nom, sc in top3:
         resultat += f"- **{nom}** : `{sc:.4f}`\n"
 
-    # Correction via menu déroulant (nom complet)
-    correction = feedback if feedback and feedback.strip() else best_theme
+    # Corriger uniquement si l'utilisateur a sélectionné autre chose que la valeur neutre
+    correction = best_theme if feedback == "(laisser la prédiction IA)" or not feedback.strip() else feedback
 
     with open("feedback.csv", mode="a", newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -114,7 +113,7 @@ def classer_et_feedback(file, feedback):
 
 def compter_livres_par_dossier(drive):
     resultats = {}
-    for nom in THEMES.keys():  # On cherche par nom complet ici
+    for nom in THEMES.keys():
         file_list = drive.ListFile({
             'q': f"title='{nom}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
         }).GetList()
@@ -122,7 +121,6 @@ def compter_livres_par_dossier(drive):
             resultats[nom] = 0
             continue
         folder_id = file_list[0]['id']
-
         fichiers = drive.ListFile({
             'q': f"'{folder_id}' in parents and mimeType='application/pdf' and trashed=false"
         }).GetList()
@@ -140,7 +138,12 @@ def afficher_nombre_livres():
 with gr.Blocks() as demo:
     with gr.Tab("📂 Upload & Classement"):
         fichier_pdf = gr.File(label="📤 Upload ton fichier PDF")
-        correction_theme = gr.Dropdown(list(THEMES.keys()), label="📝 Corriger le thème (optionnel)", interactive=True)
+        correction_theme = gr.Dropdown(
+            choices=["(laisser la prédiction IA)"] + list(THEMES.keys()),
+            label="📝 Corriger le thème (optionnel)",
+            value="(laisser la prédiction IA)",
+            interactive=True
+        )
         sortie = gr.Markdown()
         btn_classer = gr.Button("Classifier et envoyer")
 
